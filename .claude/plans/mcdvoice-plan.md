@@ -250,6 +250,103 @@ selector to key off.
 
 ---
 
+## 2.5 AMENDMENT — corrections from live recon (2026-07-28, during implementation)
+
+> Written after Task 9 ran `npm run probe:mcdvoice -- --piecemeal --store 05678`
+> against the live site. **These supersede §2.3 and §2.4 where they conflict.**
+> Everything here is verified, not inferred.
+
+### A. The terminal page does NOT announce itself — §2.4 rule 1 is wrong
+
+§2.4 assumed the last page before submission is detectable because the submit
+button's `value` changes from `Next` to `Submit`/`Finish`/`Done`, and §3.5/§7.4
+made `advance()`'s `value === 'Next'` assertion the sole guarantee that staging
+cannot submit.
+
+**No such page exists.** Verified:
+
+- The last question page (demographics; `#ProgressPercentage` = `100%`) carries
+  `<input type="submit" id="NextButton" value="Next" class="NextButton">`.
+- Clicking that "Next" **submits the survey**. The following page is the
+  Thank-You page: `body class="… Finish …"`, no submit button, validation code
+  in the body text.
+- Therefore the `value === 'Next'` assertion **never fires before submission**
+  and provides no protection whatsoever.
+
+**Incident:** the first `--piecemeal` recon run, implemented exactly to the
+original plan, walked to completion and submitted a fabricated survey for store
+05678 (validation code `6209701`). No real receipt code was involved. `--piecemeal`
+is safe with respect to *receipt codes*, but it is **not** free of consequences:
+it files a real survey response. Treat it as costly, not as a dry run.
+
+### B. Adopted rule: 100% progress IS the terminal state, enforced by two guards
+
+Replaces §2.4 rule 1 and the §7.4 `advance()` contract:
+
+1. **A page whose `#ProgressPercentage` reads exactly `100%` is the terminal
+   page.** During STAGE: parse it, record its questions as staged, and **stop**.
+   Never call `advance()` on it, under any circumstance.
+2. Only the CONFIRM phase — `/api/survey/confirm`, still gated on `confirm: true`
+   in the body, still reachable only after the user ticks the in-app checkbox —
+   may click "Next" on a 100% page. **That click is the submission.**
+3. **Two independent guards**, because the incident happened with exactly one
+   guard that was wrong (`lib/survey/mcdvoice.ts`):
+   - *Guard 1* — `WalkGuard`: the walk records every page index it judged
+     terminal; `advance()` refuses any page in that set without consulting the
+     DOM at all.
+   - *Guard 2* — a live re-read of `#ProgressPercentage` on every `advance()`.
+   Either one alone stops the walk; both must fail to reach a submission.
+4. The probe script additionally asserts, after every run, that it never reached
+   a `Finish`-class page, and aborts loudly if it did.
+
+Regression coverage: `lib/survey/__tests__/submitGuard.test.ts` (including an
+explicit test that a `"Next"` label alone is not sufficient to permit advancing),
+plus the live `--piecemeal` re-run, which now stops at page 17 / 100% with no
+`Finish` page and no validation code captured.
+
+> The progress bar is non-linear (§2.3 notes it jumps 10% → 89%), so `100%` is
+> used strictly as an *equality* test on the terminal page — never as an ordering
+> or "are we nearly done" signal.
+
+### C. `S`-prefixed ids are NOT always static text — §2.3 is wrong
+
+§2.3 states "`S`-prefixed ids are static text blocks, `R`-prefixed ids are real
+questions". The free-text comment box at 95% progress is:
+
+```html
+<div class="FNSITEM inputtypetxt" id="FNSS081000">
+  <textarea name="S081000" id="S081000" rows="8" maxlength="1200"></textarea>
+```
+
+— an `S`-prefixed id that is a real (optional) question. Classifying by id prefix
+silently drops it.
+
+**Corrected rule:** type a field by its container's `inputtype…` class, never by
+the id prefix. `inputtypeinstr` is the only genuinely static one; a container with
+no `input`/`textarea`/`select` is also static. Everything else is a question.
+See `isStaticBlock()` / `isEngineField()` in `lib/survey/parsePage.ts`.
+
+### D. Smaller corrections
+
+- **§2.1 failure detection.** "Still on `Index.aspx`" is **not** a failure signal:
+  a *successful* piecemeal entry 302s to `Index.aspx?c=NNNNNN&AllowCapture=False`,
+  and that page carries the first real question (`#PostedFNS=R000060`). Detect
+  structurally instead — if `#CN1` or `#InputStoreID` is still present, we were
+  bounced. A rejection re-renders the form with cleared fields and adds
+  `PreValidation` to the body class, often with **no** `.Error` element at all.
+- **§2.2 piecemeal entry** requires a visit date/time in the **past** in the
+  store's local time. Same-day entries are rejected outright, even at an hour
+  that has already passed locally. Default to the previous day.
+- **Navigation.** `Promise.all([page.waitForLoadState(...), page.click(...)])`
+  resolves immediately — the current document is already loaded — so every check
+  after it inspects the *pre-click* page. Use `waitForNavigation`; each step here
+  is a full form POST, usually through a 302.
+- **Question ids drift.** The live ids no longer match the §2.3 table (OSAT is
+  `R001000`, not `R003000`; page 6/7 contents are swapped). As §7.3 predicted,
+  ids are content. The parser is structure-driven and unaffected.
+
+---
+
 ## 3. Approach & key decisions
 
 ### 3.1 Framework — Next.js 15, App Router, TypeScript

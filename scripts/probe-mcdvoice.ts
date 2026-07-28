@@ -24,10 +24,12 @@
  * path to completion and SUBMITTED a fabricated survey (validation code
  * 6209701, store 05678).
  *
- * The walk is now additionally guarded by `advance()` refusing to click when
- * `#ProgressPercentage` reads 100%. That guard is PROVISIONAL — the progress bar
- * is known to be non-linear — and needs a decision from the user before
- * `--stage-only` is run against a real receipt code.
+ * ADOPTED RULE: a page whose `#ProgressPercentage` reads 100% IS the terminal
+ * state. The walk parses it, records it, and stops without clicking.
+ *
+ * Enforced by TWO independent guards in `advance()` (a WalkGuard record of
+ * pages already judged terminal, plus a live progress re-check), and by a final
+ * assertion here that the Thank-You page was never reached.
  * ==========================================================================
  */
 import fs from 'node:fs';
@@ -41,9 +43,12 @@ import {
   applyAnswers,
   enterCode,
   enterPieceMeal,
+  isFinalQuestionPage,
+  isFinishPage,
   isTerminalPage,
   readPage,
   submitButtonLabel,
+  WalkGuard,
 } from '../lib/survey/mcdvoice';
 import { suggestAnswers } from '../lib/survey/answerStrategy';
 import type { StagedQuestion } from '../lib/types';
@@ -124,10 +129,17 @@ async function walk(
   page: import('playwright').Page,
   reconFill: boolean,
   maxPages = MAX_PAGES,
-): Promise<{ pages: PageRecord[]; terminalLabel: string | null; blocked: boolean }> {
+): Promise<{
+  pages: PageRecord[];
+  terminalLabel: string | null;
+  blocked: boolean;
+  stoppedAtTerminal: boolean;
+}> {
   const pages: PageRecord[] = [];
+  const guard = new WalkGuard();
   let terminalLabel: string | null = null;
   let blocked = false;
+  let stoppedAtTerminal = false;
 
   for (let i = 0; i < maxPages; i++) {
     const read = await readPage(page, i);
@@ -166,12 +178,23 @@ async function walk(
       );
     }
 
+    // Terminal state = 100% progress (the button label never changes). Record
+    // it in the guard and stop; the questions on this page are still staged.
+    if (await isFinalQuestionPage(page)) {
+      guard.markTerminal(i);
+      terminalLabel = await submitButtonLabel(page);
+      stoppedAtTerminal = true;
+      console.log(
+        `\n  TERMINAL PAGE reached at 100% progress (button still reads ` +
+          `"${terminalLabel}"). Stopping WITHOUT clicking it.`,
+      );
+      break;
+    }
+
+    // Post-submission page — should be unreachable from this script.
     if (await isTerminalPage(page)) {
       terminalLabel = await submitButtonLabel(page);
-      console.log(
-        `\n  TERMINAL PAGE reached — button reads "${terminalLabel}". ` +
-          'Stopping without clicking it.',
-      );
+      console.log(`\n  No submit button on page ${i}; stopping.`);
       break;
     }
 
@@ -181,7 +204,7 @@ async function walk(
     await applyAnswers(page, questions, toApply);
 
     try {
-      await advance(page, i);
+      await advance(page, i, guard);
     } catch (err) {
       if (err instanceof PageBlockedError) {
         console.log(`\n  BLOCKED on page ${i}: ${err.message}`);
@@ -192,13 +215,24 @@ async function walk(
         // Expected, and the whole point: the walk stops rather than submitting.
         console.log(`\n  STOPPED before submission on page ${i}: ${err.message}`);
         terminalLabel = await submitButtonLabel(page);
+        stoppedAtTerminal = true;
         break;
       }
       throw err;
     }
   }
 
-  return { pages, terminalLabel, blocked };
+  // ---- Integration-level assertion ----
+  // Whatever happened above, this script must never have reached the
+  // post-submission Thank-You page. Fail loudly if it did.
+  if (await isFinishPage(page)) {
+    throw new Error(
+      'FATAL: the probe reached the Thank-You page — a survey was SUBMITTED. ' +
+        'The terminal-page guards failed. Do not run this script again until fixed.',
+    );
+  }
+
+  return { pages, terminalLabel, blocked, stoppedAtTerminal };
 }
 
 async function runWalk(args: Args) {
@@ -218,7 +252,10 @@ async function runWalk(args: Args) {
       await enterCode(bundle.page, args.code!);
     }
 
-    const { pages, terminalLabel, blocked } = await walk(bundle.page, args.piecemeal);
+    const { pages, terminalLabel, blocked, stoppedAtTerminal } = await walk(
+      bundle.page,
+      args.piecemeal,
+    );
 
     const summary = {
       mode: args.piecemeal ? 'piecemeal' : 'stage-only',
@@ -227,6 +264,7 @@ async function runWalk(args: Args) {
       pageCount: pages.length,
       terminalButtonLabel: terminalLabel,
       blocked,
+      stoppedAtTerminal,
       submitted: false,
       pages,
     };

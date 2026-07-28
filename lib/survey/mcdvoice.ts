@@ -338,18 +338,24 @@ export async function submitButtonLabel(page: Page): Promise<string | null> {
  * Verified 2026-07-28 by `npm run probe:mcdvoice -- --piecemeal --store 05678`:
  *
  *   There is NO page whose submit button reads "Submit"/"Finish"/"Done".
- *   The LAST question page (annual household income, `#ProgressPercentage` =
- *   "100%") carries `<input type="submit" id="NextButton" value="Next">`, and
- *   clicking that "Next" SUBMITS THE SURVEY. The next page is the Thank-You
- *   page: body class `Finish`, no submit button, validation code in the text.
+ *   The LAST question page (`#ProgressPercentage` = "100%") carries
+ *   `<input type="submit" id="NextButton" value="Next">`, and clicking that
+ *   "Next" SUBMITS THE SURVEY. The next page is the Thank-You page: body class
+ *   `Finish`, no submit button, validation code in the text.
  *
- * So plan §2.4 rule 1 — "stop when the button value is no longer Next" — never
- * fires before submission, and `advance()`'s `value === 'Next'` assertion gives
- * NO protection against completing a survey during staging.
+ * ADOPTED RULE (replaces plan §2.4 rule 1):
  *
- * `isTerminalPage()` below therefore detects the page AFTER submission, which is
- * too late to be a staging stop-rule. Until a verified stop-rule exists, the
- * only guard is the provisional 100%-progress check in `advance()`.
+ *   A page whose progress reads 100% IS the terminal state. During STAGE, parse
+ *   it, record it, and STOP — never call advance() on it. Only the CONFIRM
+ *   phase (gated on `confirm: true` after the user's in-app checkbox) may click
+ *   Next there, and that click is the submission.
+ *
+ * TWO independent guards enforce this in advance(): the WalkGuard's record of
+ * pages already judged terminal, and a live progress re-check. The original
+ * incident happened because there was exactly one guard and it was wrong.
+ *
+ * `isTerminalPage()` below detects the page AFTER submission (Thank-You), which
+ * is too late to be a stop-rule — use isFinalQuestionPage() for that.
  * ==========================================================================
  */
 export async function isTerminalPage(page: Page): Promise<boolean> {
@@ -363,22 +369,49 @@ export async function isFinishPage(page: Page): Promise<boolean> {
 }
 
 /**
- * PROVISIONAL stop-rule, pending a decision from the user.
+ * THE terminal-state rule (adopted 2026-07-28, replacing plan §2.4 rule 1).
  *
- * Since the button label never changes, the only forward-looking signal that the
- * next "Next" click will submit is `#ProgressPercentage` reading 100% on a page
- * that still has a question. This is a heuristic, not a verified contract — the
- * plan itself warns the progress bar is non-linear (it jumps 10% -> 89%).
+ * `#ProgressPercentage` reading exactly 100% means this page IS the terminal
+ * state. Clicking "Next" here submits the survey.
  *
- * It errs toward refusing to click, which is the safe direction.
+ * Staging must parse such a page, record it, and stop. Only the CONFIRM phase
+ * may click Next on it.
  */
 export async function isFinalQuestionPage(page: Page): Promise<boolean> {
   return page.evaluate(() => {
-    const el = document.getElementById('ProgressPercentage');
-    const progress = (el?.textContent ?? '').trim();
-    if (progress !== '100%') return false;
-    return !!document.querySelector('#NextButton');
+    const progress = (document.getElementById('ProgressPercentage')?.textContent ?? '').trim();
+    return progress === '100%';
   });
+}
+
+/**
+ * Guard 2 of 2 (defense in depth).
+ *
+ * The first incident happened because there was exactly ONE guard and it was
+ * wrong. A walk records every page index it has judged terminal; `advance()`
+ * refuses to act on any page already in that set, independently of re-reading
+ * the progress bar. If the progress check regresses or the DOM shifts, this
+ * still holds the line.
+ */
+export class WalkGuard {
+  private readonly terminal = new Set<number>();
+
+  markTerminal(pageIndex: number) {
+    this.terminal.add(pageIndex);
+  }
+
+  isTerminal(pageIndex: number): boolean {
+    return this.terminal.has(pageIndex);
+  }
+
+  assertAdvanceAllowed(pageIndex: number) {
+    if (this.terminal.has(pageIndex)) {
+      throw new SubmitGuardError(
+        `Refusing to advance from page ${pageIndex}: this walk already recorded it as the ` +
+          'terminal page. Clicking "Next" here would submit the survey.',
+      );
+    }
+  }
 }
 
 /**
@@ -395,18 +428,23 @@ export async function isFinalQuestionPage(page: Page): Promise<boolean> {
  * Do not add a flag, an env var, or an "auto mode" that relaxes this.
  * ==========================================================================
  */
-export async function advance(page: Page, pageIndex: number): Promise<void> {
+export async function advance(page: Page, pageIndex: number, guard?: WalkGuard): Promise<void> {
   await dismissSessionDialog(page);
 
-  // See the block comment on isTerminalPage(): the "Next" assertion below is NOT
-  // sufficient on the live site, because the final submitting click is also
-  // labelled "Next". This progress check is the only thing standing between a
-  // staging walk and an unconfirmed submission.
+  // ---- GUARD 1: the walk's own record of what it judged terminal. ----
+  // Independent of re-reading the DOM, so a regression in guard 2 cannot
+  // silently re-open the path to submission.
+  guard?.assertAdvanceAllowed(pageIndex);
+
+  // ---- GUARD 2: live progress check. ----
+  // The label assertion further below is NOT sufficient on this site: the final,
+  // submitting click is also labelled "Next". 100% progress is the real signal.
   if (await isFinalQuestionPage(page)) {
+    guard?.markTerminal(pageIndex);
     throw new SubmitGuardError(
-      `Refusing to advance past page ${pageIndex}: progress reads 100%, so clicking "Next" ` +
-        'here would SUBMIT the survey. Submission is only permitted via /api/survey/confirm ' +
-        'with explicit user confirmation.',
+      `Refusing to advance from page ${pageIndex}: progress reads 100%, so this is the ` +
+        'terminal page and clicking "Next" would SUBMIT the survey. Submission is only ' +
+        'permitted via /api/survey/confirm with explicit user confirmation.',
     );
   }
 

@@ -183,12 +183,17 @@ function parseFreeform(doc: Document, pageIndex: number, seen: Set<string>): Sta
   for (const node of nodes) {
     const name = node.getAttribute('name') ?? node.getAttribute('id') ?? '';
     if (!name || seen.has(name)) continue;
-    // Engine plumbing, not questions. Note we do NOT filter on an `R` prefix —
-    // see isEngineField/isStaticBlock: real questions can be S-prefixed.
+    // Engine plumbing, not questions.
     if (isEngineField(name)) continue;
-    if (!/^[RS]\d/.test(name) && !name.startsWith('R')) continue;
 
     const container = node.closest('[id^="FNS"]') ?? node.parentElement;
+
+    // Type by the container's `inputtype…` class, NEVER by the id prefix.
+    // `S081000` (the free-text comment box) is a real question despite its
+    // S prefix; only `inputtypeinstr` is genuinely static.
+    if (container?.classList?.contains('inputtypeinstr')) continue;
+    // Require an SMG field container so we never pick up unrelated page inputs.
+    if (!container?.id?.startsWith('FNS')) continue;
     const prompt =
       text(doc.querySelector(`#text${name}`)) ||
       text(container?.querySelector('legend') ?? null) ||
@@ -277,6 +282,32 @@ export function parsePage(html: string, pageIndex = 0): ParsedPage {
     : null;
 
   return { questions, postedFns, submitLabel: submitLabel || null, progress };
+}
+
+/**
+ * THE terminal-state rule for mcdvoice.com.
+ *
+ * Established by live recon 2026-07-28, replacing plan §2.4 rule 1. The submit
+ * button's label NEVER changes — the final question page's button also reads
+ * "Next", and clicking it submits. `#ProgressPercentage` reading exactly 100%
+ * is the real signal: that page IS the terminal state.
+ *
+ * During STAGE: parse a 100% page, record it, and stop. Never advance from it.
+ * Only the CONFIRM phase may click Next there, and that click is the submission.
+ */
+export function isTerminalProgress(progress: string | null | undefined): boolean {
+  return (progress ?? '').trim() === '100%';
+}
+
+/** Terminal state from an HTML string — the pure counterpart of the live check. */
+export function isTerminalPageHtml(html: string): boolean {
+  const { document } = parseHTML(html);
+  const doc = document as unknown as Document;
+  const progress = doc.querySelector('#ProgressPercentage')?.textContent ?? null;
+  if (isTerminalProgress(progress)) return true;
+  // Post-submission Thank-You page: body class `Finish`, no submit button.
+  if (doc.body?.classList?.contains('Finish')) return true;
+  return !doc.querySelector('#NextButton, input[type=submit], button[type=submit]');
 }
 
 /**
