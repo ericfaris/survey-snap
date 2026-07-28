@@ -46,6 +46,9 @@ export async function closeBrowser(bundle: Partial<BrowserBundle> | null | undef
  * walk does not look like a scraper hammering the form.
  */
 export function politeDelay(): Promise<void> {
+  // Skipped under vitest only — this is about test runtime, not about relaxing
+  // any guard. Nothing in the request path can set it.
+  if (process.env.VITEST) return Promise.resolve();
   const ms = 700 + Math.floor(Math.random() * 800);
   return new Promise((r) => setTimeout(r, ms));
 }
