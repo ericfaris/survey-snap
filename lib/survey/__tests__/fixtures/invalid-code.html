@@ -1,0 +1,18 @@
+<!-- Plan §2.1 invalid-code failure signature — verified 2026-07-28.
+     The browser stays on Index.aspx, CN inputs gain .inputErrorBorder and a
+     span#errorCN5.Error.ErrorSign appears. -->
+<html><body>
+<form method="post" id="surveyEntryForm" action="Survey.aspx?c=493313" autocomplete="off">
+  <input type="hidden" id="JavaScriptEnabled" name="JavaScriptEnabled" value="0"/>
+  <input type="hidden" id="FIP" name="FIP" value="True"/>
+  <input class="coupon-length-5 inputErrorBorder" type="text" id="CN1" name="CN1" maxlength="5" value="" />
+  <input class="coupon-length-5 inputErrorBorder" type="text" id="CN2" name="CN2" maxlength="5" value="" />
+  <input class="coupon-length-5 inputErrorBorder" type="text" id="CN3" name="CN3" maxlength="5" value="" />
+  <input class="coupon-length-5 inputErrorBorder" type="text" id="CN4" name="CN4" maxlength="5" value="" />
+  <input class="coupon-length-5 inputErrorBorder" type="text" id="CN5" name="CN5" maxlength="5" value="" />
+  <span id="errorCN5" class="Error ErrorSign">* Error: Please answer this question.</span>
+  <input class="coupon-length-1 inputErrorBorder" type="text" id="CN6" name="CN6" maxlength="1" value="" />
+  <input type="submit" id="NextButton" name="NextButton" value="Start" class="NextButton"/>
+  <input type="hidden" id="AllowCapture" name="AllowCapture" value="False"/>
+</form>
+</body></html>

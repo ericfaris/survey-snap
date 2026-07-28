@@ -1,0 +1,41 @@
+<!-- Transcribed from plan §2.3(b) + (d) — verified 2026-07-28.
+     Page 1 of the piecemeal walk: a static text block plus a vertical radio.
+     DOM order is Opt1, Opt3, Opt2 — it does NOT match value order. -->
+<html><body class="Survey US lightSurvey DesktopMode PieceMeal">
+<form method="post" id="surveyForm" action="Survey.aspx?c=493314">
+<input type="hidden" id="PostedFNS" name="PostedFNS" value="S000100|R000455"/>
+<div id="ProgressPercentage">1%</div>
+<div id="surveyQuestions" class="SurveyHolder">
+
+<div class="FNSITEM inputtypeinstr" id="FNSS000100">
+  <p class="FNSText BlockHeader" id="textS000100"><span>Upon completion of this survey you will be given a validation code that you can write on your receipt.</span></p>
+</div>
+
+<fieldset class="FNSITEM inputtyperblv" id="FNSR000455">
+  <legend class="FNSText" id="textR000455">How did you place your order?</legend>
+  <div class="rbListContainer"><div class="rbList" aria-labelledby="textR000455">
+    <div class="Opt1 rbloption">
+      <span class="radioButtonHolder">
+        <input type="radio" name="R000455" value="1" id="R000455.1" class="simpleInput rblv sr-only">
+        <label for="R000455.1" id="textR000455.1" class="radioSimpleInput"><span>With an employee at the restaurant</span></label>
+      </span>
+    </div>
+    <div class="Opt3 rbloption">
+      <span class="radioButtonHolder">
+        <input type="radio" name="R000455" value="3" id="R000455.3" class="simpleInput rblv sr-only">
+        <label for="R000455.3" id="textR000455.3" class="radioSimpleInput"><span>Using the McDonald&rsquo;s Mobile app</span></label>
+      </span>
+    </div>
+    <div class="Opt2 rbloption">
+      <span class="radioButtonHolder">
+        <input type="radio" name="R000455" value="2" id="R000455.2" class="simpleInput rblv sr-only">
+        <label for="R000455.2" id="textR000455.2" class="radioSimpleInput"><span>Using a kiosk inside the restaurant</span></label>
+      </span>
+    </div>
+  </div></div>
+</fieldset>
+
+</div>
+<input type="submit" id="NextButton" name="NextButton" value="Next" class="NextButton"/>
+</form>
+</body></html>
