@@ -143,6 +143,13 @@ export default function ReceiptDetail({ receiptId }: { receiptId: string }) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || json.error);
+      // Hand the held-session id and its deadline to the review screen so it can
+      // use the fast path and show a countdown.
+      sessionStorage.setItem(`survey-snap:session:${receiptId}`, json.stagingSessionId);
+      sessionStorage.setItem(
+        `survey-snap:expires:${receiptId}`,
+        String(new Date(json.expiresAt).getTime()),
+      );
       router.push(`/receipt/${receiptId}/review`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
