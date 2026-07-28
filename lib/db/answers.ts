@@ -27,17 +27,31 @@ export interface StoredAnswer extends StagedQuestion {
   confirmed: AnswerValue;
 }
 
+/**
+ * The `answers` table has no `required` column, so derive it from the input
+ * type, matching what parsePage produces: SMG makes single-select questions
+ * mandatory, while "select all that apply" checkboxes, free text and
+ * demographic dropdowns are optional.
+ *
+ * Getting this wrong in the permissive direction is harmless; getting it wrong
+ * in the strict direction makes the review screen impossible to submit.
+ */
+function isRequiredType(inputType: InputType): boolean {
+  return inputType === 'radio_grid' || inputType === 'radio_list';
+}
+
 function toAnswer(row: Row): StoredAnswer {
+  const inputType = row.input_type as InputType;
   return {
     questionId: row.question_id,
     pageIndex: row.page_index,
     prompt: row.prompt,
-    inputType: row.input_type as InputType,
+    inputType,
     options: parseJson<QuestionOption[]>(row.options_json, []),
     suggested: parseJson<AnswerValue>(row.suggested, null),
     confirmed: parseJson<AnswerValue>(row.confirmed, null),
     needsUser: row.needs_user === 1,
-    required: true,
+    required: isRequiredType(inputType),
   };
 }
 

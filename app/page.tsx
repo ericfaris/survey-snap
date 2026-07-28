@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import HistoryList from '@/components/HistoryList';
+
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
@@ -13,6 +16,8 @@ export default function Home() {
           📷 New receipt
         </Link>
       </div>
+
+      <HistoryList />
     </div>
   );
 }

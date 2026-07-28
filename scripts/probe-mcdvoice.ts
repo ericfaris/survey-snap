@@ -286,7 +286,7 @@ async function runReuseCheck(code: string) {
   console.log('This enters your real code, advances two pages, abandons the session,');
   console.log('then tries the SAME code again in a fresh browser. Nothing is submitted.\n');
 
-  let first = await launchBrowser();
+  const first = await launchBrowser();
   try {
     await enterCode(first.page, code);
     console.log('  pass 1: code accepted.');
@@ -326,7 +326,6 @@ async function runReuseCheck(code: string) {
   } finally {
     await closeBrowser(second);
   }
-  void first;
 }
 
 async function main() {

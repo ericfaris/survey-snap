@@ -13,8 +13,6 @@ import type { InputType, ParsedPage, QuestionOption, StagedQuestion } from '../t
  * content and will drift.
  */
 
-type El = ReturnType<typeof parseHTML>['document']['documentElement'];
-
 function text(node: { textContent?: string | null } | null | undefined): string {
   return (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
 }

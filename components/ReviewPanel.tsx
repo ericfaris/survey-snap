@@ -173,7 +173,9 @@ export default function ReviewPanel({ receiptId }: { receiptId: string }) {
       {unanswered.length > 0 && (
         <div className="card" style={{ borderColor: 'var(--accent)' }}>
           <p style={{ marginTop: 0, fontWeight: 600 }}>
-            {unanswered.length} question{unanswered.length === 1 ? '' : 's'} need your answer
+            {unanswered.length === 1
+              ? '1 question needs your answer'
+              : `${unanswered.length} questions need your answer`}
           </p>
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {unanswered.map((q) => (
