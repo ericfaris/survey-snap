@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+build/
+
+# Receipt images and the local SQLite DB never get committed.
+data/
+data/uploads/
+*.db
+*.db-*
+
+tmp/
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
