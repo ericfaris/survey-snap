@@ -19,9 +19,29 @@ function text(node: { textContent?: string | null } | null | undefined): string 
   return (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
-/** Question ids are `R######`; `S`-prefixed ids are static text blocks. */
-export function isQuestionId(id: string): boolean {
-  return /^R\d+/.test(id);
+/**
+ * CORRECTION TO PLAN §2.3, from live recon 2026-07-28.
+ *
+ * The plan states "`S`-prefixed ids are static text blocks, `R`-prefixed ids are
+ * real questions". That is NOT true: the free-text comment box at 95% progress
+ * is `<textarea name="S081000">` inside `div.FNSITEM.inputtypetxt`, and it is a
+ * real (optional) question. Classifying by id prefix silently drops it.
+ *
+ * Classify by the container's `inputtype…` class instead — `inputtypeinstr` is
+ * the only genuinely static one — and fall back to "does it contain an input".
+ */
+export function isEngineField(name: string): boolean {
+  return /^(PostedFNS|IoNF|JavaScriptEnabled|FIP|AllowCapture|CN\d|Input[A-Za-z]+|AmountSpent\d)$/i.test(
+    name,
+  );
+}
+
+/** True when this `PostedFNS` id is a static instruction block, not a question. */
+export function isStaticBlock(doc: Document, fieldId: string): boolean {
+  const container = doc.getElementById(`FNS${fieldId}`);
+  if (!container) return false;
+  if (container.classList.contains('inputtypeinstr')) return true;
+  return !container.querySelector('input, textarea, select');
 }
 
 function optionsFrom(inputs: Element[], doc: Document, labelFor: (input: Element) => string) {
@@ -163,9 +183,10 @@ function parseFreeform(doc: Document, pageIndex: number, seen: Set<string>): Sta
   for (const node of nodes) {
     const name = node.getAttribute('name') ?? node.getAttribute('id') ?? '';
     if (!name || seen.has(name)) continue;
-    // Engine plumbing, not questions.
-    if (/^(PostedFNS|IoNF|JavaScriptEnabled|FIP|AllowCapture|CN\d)$/i.test(name)) continue;
-    if (!isQuestionId(name)) continue;
+    // Engine plumbing, not questions. Note we do NOT filter on an `R` prefix —
+    // see isEngineField/isStaticBlock: real questions can be S-prefixed.
+    if (isEngineField(name)) continue;
+    if (!/^[RS]\d/.test(name) && !name.startsWith('R')) continue;
 
     const container = node.closest('[id^="FNS"]') ?? node.parentElement;
     const prompt =
@@ -226,7 +247,7 @@ export function parsePage(html: string, pageIndex = 0): ParsedPage {
   // that we failed to parse is an unrecognised type — surface it rather than
   // silently dropping it, so the review UI can ask the user.
   for (const fieldId of postedFns) {
-    if (!isQuestionId(fieldId)) continue; // S-prefixed = static text block
+    if (isStaticBlock(doc, fieldId)) continue;
     if (seen.has(fieldId) || questions.some((q) => q.questionId === fieldId)) continue;
     const container = doc.getElementById(`FNS${fieldId}`);
     questions.push({

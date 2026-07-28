@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { hasFieldError, isQuestionId, parsePage } from '../parsePage';
+import { hasFieldError, isEngineField, parsePage } from '../parsePage';
 
 const fixture = (name: string) =>
   fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
 
-describe('question id classification', () => {
-  it('treats R-prefixed ids as questions and S-prefixed as static text', () => {
-    expect(isQuestionId('R028000')).toBe(true);
-    expect(isQuestionId('S000100')).toBe(false);
+describe('engine field classification', () => {
+  it('recognises the engine plumbing that is never a question', () => {
+    expect(isEngineField('PostedFNS')).toBe(true);
+    expect(isEngineField('CN3')).toBe(true);
+    expect(isEngineField('InputStoreID')).toBe(true);
+    expect(isEngineField('R028000')).toBe(false);
+    expect(isEngineField('S081000')).toBe(false);
   });
 });
 
