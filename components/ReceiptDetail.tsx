@@ -143,6 +143,18 @@ export default function ReceiptDetail({ receiptId }: { receiptId: string }) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || json.error);
+      if (!json.reachedTerminal) {
+        // The walk got blocked on a required question before reaching the
+        // real end of the survey — mcdvoice.com's own validation rejected an
+        // unanswered required field, and this site has no Back button, so
+        // the held session cannot be salvaged. Don't route to a review
+        // screen with a Confirm & Submit button that's guaranteed to fail.
+        throw new Error(
+          'Staging stopped before reaching the end of the survey (a required question could not ' +
+            'be answered confidently). Re-run staging — the answer strategy may have been updated ' +
+            'since this attempt.',
+        );
+      }
       // Hand the held-session id and its deadline to the review screen so it can
       // use the fast path and show a countdown.
       sessionStorage.setItem(`survey-snap:session:${receiptId}`, json.stagingSessionId);

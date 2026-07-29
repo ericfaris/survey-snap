@@ -112,8 +112,11 @@ function factualAnswer(
   }
 
   // Visit type: only answer if the receipt actually says drive-thru.
+  // "Side2" (or "Side 2") under the KS#/register number is McDonald's POS
+  // shorthand for the second drive-thru order/pickup window — a real signal,
+  // not a guess.
   if (/please select your visit type|was this visit|visit type/i.test(prompt)) {
-    if (ctx.ocrText && /drive.?thru|drivethru|\bD\/T\b/i.test(ctx.ocrText)) {
+    if (ctx.ocrText && /drive.?thru|drivethru|\bD\/T\b|\bside\s*2\b/i.test(ctx.ocrText)) {
       const dt = findOption(q.options, /drive.?thru/i);
       if (dt) return { value: dt.value };
     }
@@ -143,7 +146,7 @@ export interface Suggestion {
   needsUser: boolean;
 }
 
-export function suggestAnswer(q: StagedQuestion, ctx: StrategyContext = {}): Suggestion {
+function computeSuggestion(q: StagedQuestion, ctx: StrategyContext): Suggestion {
   // 4. Unrecognised / free text / dropdown → never guess.
   if (q.inputType === 'text' || q.inputType === 'select' || q.inputType === 'unknown') {
     return { suggested: null, needsUser: true };
@@ -177,6 +180,27 @@ export function suggestAnswer(q: StagedQuestion, ctx: StrategyContext = {}): Sug
   if (best) return { suggested: best.value, needsUser: false };
 
   return { suggested: null, needsUser: true };
+}
+
+export function suggestAnswer(q: StagedQuestion, ctx: StrategyContext = {}): Suggestion {
+  const result = computeSuggestion(q, ctx);
+
+  // mcdvoice.com is a strict forward-only walk with no Back button: every
+  // "Next" click POSTs that page's answers, and the site rejects a blank
+  // *required* radio question, permanently stalling the whole staging walk
+  // on that page (verified live — see the incident this fixed). Optional
+  // question types (checkbox/text/select) are safe to leave blank; a
+  // required radio_list/radio_grid is not, so it gets a provisional
+  // first-option pick purely so the walk can keep mapping the rest of the
+  // survey. needsUser stays true either way, so the review UI still makes
+  // the user look at it before anything is confirmed — this never changes
+  // what reaches McDonald's, only whether staging can see past the page.
+  const isRequiredRadio = q.inputType === 'radio_grid' || q.inputType === 'radio_list';
+  if (result.suggested === null && isRequiredRadio && q.options.length > 0) {
+    return { suggested: q.options[0].value, needsUser: true };
+  }
+
+  return result;
 }
 
 /** Apply the strategy across a parsed page. */

@@ -137,9 +137,14 @@ describe('visit type — no confident default', () => {
     required: true,
   };
 
-  it('leaves it blank and asks the user when the receipt gives no hint', () => {
+  it('picks a provisional first option and still asks the user when the receipt gives no hint', () => {
+    // mcdvoice.com has no Back button and rejects a blank required radio,
+    // which would permanently stall the staging walk on this page (verified
+    // live). A required radio question always gets a provisional pick so
+    // staging can keep going; needsUser stays true so the review UI still
+    // makes the user confirm it before anything is submitted.
     const s = suggestAnswer(visitType);
-    expect(s.suggested).toBeNull();
+    expect(s.suggested).toBe(visitType.options[0].value);
     expect(s.needsUser).toBe(true);
   });
 
@@ -206,7 +211,9 @@ describe('unrecognised types are never guessed', () => {
     expect(s).toEqual({ suggested: null, needsUser: true });
   });
 
-  it('leaves a scale with no recognisable labels blank rather than guessing', () => {
+  it('picks a provisional first option for a required radio with no recognisable labels, but still flags it', () => {
+    // Same forward-only-site constraint as the visit-type case: a required
+    // radio question can never be left blank going into a live click.
     const s = suggestAnswer({
       ...base,
       prompt: 'Pick one',
@@ -216,6 +223,11 @@ describe('unrecognised types are never guessed', () => {
         { value: '2', label: 'Option B' },
       ],
     });
+    expect(s).toEqual({ suggested: '1', needsUser: true });
+  });
+
+  it('still leaves an optional (non-radio) unrecognised question blank', () => {
+    const s = suggestAnswer({ ...base, prompt: 'mystery optional', inputType: 'checkbox' });
     expect(s).toEqual({ suggested: null, needsUser: true });
   });
 });

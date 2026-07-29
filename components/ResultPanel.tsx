@@ -9,6 +9,7 @@ export default function ResultPanel({ receiptId }: { receiptId: string }) {
   const [run, setRun] = useState<SurveyRun | null>(null);
   const [copied, setCopied] = useState(false);
   const [showText, setShowText] = useState(false);
+  const [screenshotMissing, setScreenshotMissing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -101,7 +102,7 @@ export default function ResultPanel({ receiptId }: { receiptId: string }) {
         </div>
       )}
 
-      {run && (
+      {run && !screenshotMissing && (
         <div className="card">
           <p className="muted" style={{ marginTop: 0 }}>
             Screenshot of the final page (fallback)
@@ -111,6 +112,7 @@ export default function ResultPanel({ receiptId }: { receiptId: string }) {
             src={`/api/runs/${run.id}/final.png`}
             alt="Final survey page"
             style={{ width: '100%', borderRadius: 8, display: 'block' }}
+            onError={() => setScreenshotMissing(true)}
           />
         </div>
       )}

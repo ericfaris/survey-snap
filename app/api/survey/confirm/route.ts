@@ -184,6 +184,26 @@ async function resumeAndSubmit(
 
   // Sanity: we must actually be on the terminal page before submitting.
   if (!(await isFinalQuestionPage(page))) {
+    // Capture what the page actually shows before we lose the session, so a
+    // repeat of this failure is diagnosable instead of a guess. This never
+    // clicks anything — read-only.
+    let driftedText = '(could not read page text)';
+    let driftedUrl = '(unknown)';
+    try {
+      driftedText = (await page.evaluate(() => document.body?.innerText ?? '')).slice(0, 4000);
+      driftedUrl = page.url();
+      const shot = await page.screenshot({ fullPage: true }).catch(() => null);
+      if (shot) {
+        const file = `${runId}-drift.png`;
+        await fs.writeFile(path.join(UPLOAD_DIR, file), shot);
+      }
+    } catch {
+      /* best-effort diagnostics only; fall through to the real error */
+    }
+    updateRun(runId, {
+      message: `Drift detail — url: ${driftedUrl}`,
+      finalPageText: driftedText,
+    });
     throw new Error(
       'The held session is not on the final page any more. Re-stage this receipt and try again.',
     );
