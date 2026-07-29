@@ -150,10 +150,41 @@ variable that bypasses confirmation. Please don't add one.
 
 ### Privacy
 
-The app binds to `0.0.0.0` with **no authentication**. That's acceptable on a
-trusted home LAN and nowhere else — don't port-forward it. Receipt photos and the
+The app itself binds to `0.0.0.0` with **no authentication built in** — that's
+only acceptable as-is on a trusted home LAN. Public access (see below) is
+gated externally by Cloudflare Access, not by the app. Receipt photos and the
 SQLite database live in `data/`, which is gitignored and never leaves the
-machine. OCR runs locally; no image is sent to any cloud service.
+machine (or the container's bind-mounted volume). OCR runs locally; no image
+is sent to any cloud service.
+
+---
+
+## Deployment (lab)
+
+Packaged as a multi-stage Docker image following the lab's standard
+conventions (`Dockerfile`, `docker-compose.yml`):
+
+```bash
+docker compose up -d --build
+docker compose logs --tail=30 app
+```
+
+Runs on `127.0.0.1:8800` (host-only — the container never binds a public
+interface directly). `./data` is bind-mounted to `/app/data` for the SQLite DB
+and receipt uploads, so they persist across rebuilds.
+
+Public access is at **https://ss.mooseflip.com**, via the shared lab Cloudflare
+Tunnel and gated by **Cloudflare Access**, restricted to `ericfaris@gmail.com`
+only (same shape as the other lab apps — self-hosted Access application, email
+policy, 730h session). This tunnel is *remotely managed*: routing lives in
+Cloudflare's cloud config, not the local `cloudflared` `config.yml` — update it
+via the Cloudflare API (`cfd_tunnel/{id}/configurations`), not by editing the
+YAML file, or the change silently won't take effect.
+
+The Dockerfile installs `tesseract-ocr`, rebuilds `better-sqlite3`'s native
+binding, and installs Playwright's Chromium with `--with-deps`, then purges
+the C/C++ build toolchain to keep the runtime image lean. Runs as uid 1000
+(matches the host user via the bind mount), not root.
 
 ---
 
