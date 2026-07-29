@@ -1,0 +1,20 @@
+# Project name fixes the container name to survey-snap-app-1 regardless of the
+# directory the compose file lives in.
+name: survey-snap
+
+services:
+  app:
+    build: .
+    image: ericfaris/survey-snap:latest
+    restart: unless-stopped
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:8800:3000"
+    shm_size: "512m" # Chromium needs more than Docker's 64M /dev/shm default
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - BASE_URL=${BASE_URL:-https://ss.mooseflip.com}

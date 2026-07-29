@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+data
+tmp
+.git
+.claude
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
