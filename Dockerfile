@@ -7,7 +7,7 @@ WORKDIR /app
 # python3/make/g++ are needed by node-gyp to compile better-sqlite3's native
 # binding. Same base image as the runtime stage, so the compiled binary is
 # ABI-compatible when copied over below.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
       python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 
@@ -32,7 +32,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
 
 # python3/make/g++: rebuild better-sqlite3's native binding for this stage.
 # tesseract-ocr(-eng): the OCR pipeline shells out to the system binary.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
       python3 make g++ \
       tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
