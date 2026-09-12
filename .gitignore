@@ -13,3 +13,4 @@ tmp/
 .env*.local
 *.tsbuildinfo
 next-env.d.ts
+.claude/scheduled_tasks.lock
