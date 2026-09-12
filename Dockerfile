@@ -55,4 +55,4 @@ COPY --from=build /app/next.config.mjs ./next.config.mjs
 COPY --from=build /app/lib/db/schema.sql ./lib/db/schema.sql
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]

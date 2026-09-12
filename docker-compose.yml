@@ -7,6 +7,7 @@ services:
     build: .
     image: ericfaris/survey-snap:latest
     restart: unless-stopped
+    init: true
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
