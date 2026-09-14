@@ -114,7 +114,7 @@ export default function CodeEditor({ value, candidates = [], onChange }: CodeEdi
             ref={(el) => {
               refs.current[i] = el;
             }}
-            className="mono"
+            className="mono code-box"
             type="text"
             inputMode="numeric"
             autoComplete="off"
