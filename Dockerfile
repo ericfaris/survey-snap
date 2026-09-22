@@ -50,6 +50,9 @@ RUN npm ci --omit=dev \
 
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/next.config.mjs ./next.config.mjs
+# next start (no `output: "standalone"`) serves /public straight off disk at
+# runtime — it isn't bundled into .next, so it must be copied explicitly.
+COPY --from=build /app/public ./public
 # Read as a raw file at runtime (lib/db.ts), not bundled by webpack like the
 # TS/JS it sits next to — must be copied explicitly.
 COPY --from=build /app/lib/db/schema.sql ./lib/db/schema.sql
