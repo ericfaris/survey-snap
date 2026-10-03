@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- deps: full install (incl. devDependencies) for the Next.js build ----
-FROM node:22-slim AS deps
+FROM node:24-slim AS deps
 WORKDIR /app
 
 # python3/make/g++ are needed by node-gyp to compile better-sqlite3's native
@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build
 
 # ---- runtime: production deps only + built output + browser/OCR binaries ----
-FROM node:22-slim AS runtime
+FROM node:24-slim AS runtime
 WORKDIR /app
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
