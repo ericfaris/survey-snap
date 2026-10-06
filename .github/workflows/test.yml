@@ -24,6 +24,11 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # Tests alone don't exercise next build (tsconfig paths, type-check);
+      # the TS 7 bump passed tests but broke the lab deploy build.
+      - name: Build
+        run: npm run build
+
   # Runs on a self-hosted runner on the lab host itself — GitHub's own hosted
   # runners can't reach this private host. Gated to push-to-main ONLY
   # (never pull_request) so untrusted PR code can never execute here; this
