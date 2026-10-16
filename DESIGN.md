@@ -244,7 +244,10 @@ All in `app/globals.css`, applied via the existing className contract in
     mood adjectives; design presentation board."** — chosen direction.
   - `field-audit.png` — "Field Audit / Inspector Clipboard" direction — rejected (see §1).
   - `thermal-zine.png` — "Thermal Print Zine" direction — rejected (see §1).
-- **App icon** — generated via Ideogram (see §7), prompt: *"A minimal square app icon
+- **App icon** — *superseded 2026-10-16 by the house icon standard shared with every
+  mooseflip app: a receipt in an amber viewfinder with a bold amber tick, rendered from
+  `scripts/icons/icon.svg` by `python3 scripts/icons/build.py` (`app/__tests__/icons.test.ts`
+  guards the wiring).* The original was generated via Ideogram (see §7), prompt: *"A minimal square app icon
   for 'survey-snap': a simple thermal receipt strip with a curled bottom edge, rendered
   in warm cream paper white, sitting on a near-black rounded-square background; a
   single bold amber checkmark stamped across the receipt like an ink stamp; no text, no
@@ -281,8 +284,9 @@ All in `app/globals.css`, applied via the existing className contract in
 | `public/fonts/bebas-neue-400.woff2` | Display face |
 | `public/fonts/plex-sans-{400,500,600,700}.woff2` | Body face, 4 weights |
 | `public/fonts/plex-mono-{400,500,600,700}.woff2` | Code/mono face, 4 weights |
-| `public/favicon.ico` | 16/32/48px multi-resolution favicon (hand-assembled from the generated icon) |
-| `public/icon-32.png`, `icon-192.png`, `icon-512.png` | PNG icon sizes for `<link>`/manifest |
+| `scripts/icons/icon.svg`, `build.py` | Icon master + renderer (house icon standard, 2026-10-16) |
+| `public/favicon.ico` | 16/32/48 favicon |
+| `public/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Manifest icons (rounded tile + maskable) |
 | `public/apple-touch-icon.png` | 180×180 iOS home-screen icon |
 | `public/manifest.json` | Web app manifest (name, theme color, icon set) |
 | `.claude/design-moodboards/diner-ledger.png` | Chosen mood board (reference only) |

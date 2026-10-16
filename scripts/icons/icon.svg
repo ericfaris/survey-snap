@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+  <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".45"/></filter>
+<radialGradient id="bgg" cx="50%" cy="35%" r="75%"><stop offset="0" stop-color="#35302a"/><stop offset="1" stop-color="#0c0b09"/></radialGradient><linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf8ef"/><stop offset="1" stop-color="#e3dccb"/></linearGradient></defs>
+<g id="bg"><rect width="512" height="512" fill="url(#bgg)"/></g>
+<g id="mark"><g filter="url(#sh)" transform="rotate(-6 256 256)">
+  <path d="M160 92H352V404L352 420L336 404L320 420L304 404L288 420L272 404L256 420L240 404L224 420L208 404L192 420L176 404L160 420Z" fill="url(#paper)"/>
+  <rect x="210" y="122" width="92" height="22" rx="11" fill="#27231d"/>
+  <rect x="186" y="172" width="140" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="204" width="96" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="204" width="26" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="232" width="110" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="232" width="26" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="260" width="80" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="260" width="26" height="12" rx="6" fill="#c9bfa9"/>
+</g>
+<g filter="url(#sh)">
+  <path d="M196 318l46 46 96-112" fill="none" stroke="#27231d" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M196 318l46 46 96-112" fill="none" stroke="#ffc72c" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g fill="none" stroke="#ffc72c" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M84 132V84h48"/><path d="M380 84h48v48"/><path d="M428 380v48h-48"/><path d="M132 428H84v-48"/>
+</g></g>
+<g id="mark-small"><g transform="translate(256 256) scale(1.22) translate(-262 -256)"><g filter="url(#sh)" transform="rotate(-6 256 256)">
+  <path d="M160 92H352V404L352 420L336 404L320 420L304 404L288 420L272 404L256 420L240 404L224 420L208 404L192 420L176 404L160 420Z" fill="url(#paper)"/>
+  <rect x="210" y="122" width="92" height="22" rx="11" fill="#27231d"/>
+  <rect x="186" y="172" width="140" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="204" width="96" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="204" width="26" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="232" width="110" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="232" width="26" height="12" rx="6" fill="#c9bfa9"/><rect x="186" y="260" width="80" height="12" rx="6" fill="#c9bfa9"/><rect x="300" y="260" width="26" height="12" rx="6" fill="#c9bfa9"/>
+</g>
+<g filter="url(#sh)">
+  <path d="M196 318l46 46 96-112" fill="none" stroke="#27231d" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M196 318l46 46 96-112" fill="none" stroke="#ffc72c" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</g></g></g>
+</svg>

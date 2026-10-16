@@ -6,14 +6,11 @@ export const metadata: Metadata = {
   title: 'survey-snap',
   description: 'Receipt-to-survey assistant for McDVoice',
   manifest: '/manifest.json',
+  // House icon set (scripts/icons/build.py): favicon.ico + apple-touch-icon in
+  // the head, 192/512/maskable in the manifest.
   icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon-32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
-      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
-    ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    icon: [{ url: '/favicon.ico', sizes: 'any' }],
+    apple: [{ url: '/apple-touch-icon.png' }],
   },
 };
 

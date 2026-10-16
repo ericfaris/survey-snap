@@ -474,11 +474,14 @@ export default function DesignSystemPage() {
       <Section title="App icon" id="icon">
         <div className="row" style={{ gap: 'var(--space-4)', alignItems: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-192.png" alt="survey-snap app icon" width={96} height={96} style={{ borderRadius: 20 }} />
+          <img src="/icon-512.png" alt="survey-snap app icon" width={96} height={96} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-maskable-512.png" alt="survey-snap maskable icon" width={72} height={72} style={{ borderRadius: '50%' }} />
           <p className="muted" style={{ margin: 0, maxWidth: 420 }}>
-            A thermal receipt stamped with an amber checkmark — reads clearly at favicon size,
-            reuses the app&apos;s own paper + amber-accent metaphor. Generated via Ideogram; see{' '}
-            <code className="mono">/DESIGN.md</code> for the prompt and every exported size.
+            A thermal receipt in an amber camera viewfinder, checked off with a bold amber
+            tick: the app&apos;s own paper + amber-accent metaphor on the house icon standard.
+            Rendered from <code className="mono">scripts/icons/icon.svg</code>; see{' '}
+            <code className="mono">/DESIGN.md</code>.
           </p>
         </div>
       </Section>
